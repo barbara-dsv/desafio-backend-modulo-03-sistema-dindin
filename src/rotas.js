@@ -5,6 +5,7 @@ const rotas = express()
 
 const schemaUsuario = require('./schemas/schemaUsuario')
 const schemaLogin = require('./schemas/schemaLogin')
+const shcemaTransacao = require('./schemas/schemaTransacao')
 
 const cadastrarUsuario = require('./controladores/usuarios/cadastrarUsuario')
 const login = require('./controladores/usuarios/login')
@@ -28,11 +29,11 @@ rotas.put('/usuario', validarRequisicao(schemaUsuario), atualizarUsuario)
 
 rotas.get('/categoria', listarCategorias)
 
-rotas.get('/transacao', listarTransacoes)
+rotas.get('/transacao?:categoria_id', listarTransacoes)
 rotas.get('/transacao/extrato', obterExtrado)
 rotas.get('/transacao/:id', detalharTransacao)
-rotas.post('/transacao', cadastrarTransacao)
-rotas.put('/transacao/:id', atualizarTransacao)
+rotas.post('/transacao', validarRequisicao(shcemaTransacao), cadastrarTransacao)
+rotas.put('/transacao/:id', validarRequisicao(shcemaTransacao), atualizarTransacao)
 rotas.delete('/transacao/:id', excluirTransacao)
 
 module.exports = rotas
