@@ -1,18 +1,27 @@
-const pool = require('../../conexao')
+const knex = require('../../bancoDeDados/conexao')
 const bcrypt = require('bcrypt')
 
 const cadastrarUsuario = async (req, res) => {
     const { nome, email, senha } = req.body
-    try {
-        const { rowCount } = await pool.query('select * from usuarios where email = $1', [email])
 
-        if (rowCount > 0) return res.status(400).json({ message: "Já existe usuário cadastrado com o e-mail informado." })
+    try {
+        const emailRegistrado = await knex('usuarios').where({ email }).first()
+        if (emailRegistrado) {
+            return res.status(400).json({
+                mensagem: 'Email já cadastrado.'
+            })
+        }
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
 
-        const { rows } = await pool.query('insert into usuarios (nome, email, senha) values ($1, $2, $3) returning *', [nome, email, senhaCriptografada])
+        const usuario = await knex('usuarios').insert({
+            nome,
+            email,
+            senha: senhaCriptografada
+        }).returning('*')
 
-        const { senha: _, ...usuarioCadastrado } = rows[0]
+
+        const { senha: _, ...usuarioCadastrado } = usuario[0]
 
         return res.status(201).json(usuarioCadastrado)
     } catch (error) {

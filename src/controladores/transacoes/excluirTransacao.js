@@ -1,13 +1,14 @@
-const pool = require('../../conexao')
+const knex = require('../../bancoDeDados/conexao')
 
 const excluirTransacao = async (req, res) => {
     const { id: idTransacao } = req.params
     const { id } = req.usuario
     try {
-        const { rows: transacaoEncontrada } = await pool.query('select * from transacoes where id = $1 and usuario_id = $2', [idTransacao, id])
-        if (transacaoEncontrada.length === 0) return res.status(400).json({ mensagem: 'Transação não encontrada.' })
+        const transacaoEncontrada = await knex('transacoes').where({ id: idTransacao, usuario_id: id }).first()
 
-        const excluindoTransicao = await pool.query('delete from transacoes where id = $1 and usuario_id = $2', [idTransacao, id])
+        if (!transacaoEncontrada) return res.status(404).json({ mensagem: 'Transação não encontrada ou não pertence a este usuário' })
+
+        await knex('transacoes').where({ id: idTransacao }).del()
 
         return res.status(201).send()
 

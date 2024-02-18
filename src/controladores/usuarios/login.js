@@ -1,6 +1,5 @@
-const pool = require('../../conexao')
+const knex = require('../../bancoDeDados/conexao')
 const jwt = require('jsonwebtoken')
-const senhaJwt = require('../../senhaJwt')
 const bcrypt = require('bcrypt')
 
 const login = async (req, res) => {
@@ -8,24 +7,25 @@ const login = async (req, res) => {
 
     try {
 
-        const usuario = await pool.query('select * from usuarios where email = $1', [email])
+        const usuario = await knex('usuarios').where({ email }).first();
 
-        if (usuario.rowCount < 1) {
-            return res.status(404).json({ mensagem: 'Usuário e/ou senha inválido(s).' })
+        if (!usuario) {
+            return res.status(400).json({
+                mensagem: 'Email ou senha não conferem'
+            })
         }
 
-
-        const senhaValida = await bcrypt.compare(senha, usuario.rows[0].senha)
+        const senhaValida = await bcrypt.compare(senha, usuario.senha)
 
         if (!senhaValida) {
             return res.status(400).json({ mensagem: 'Usuário e/ou senha inválido(s).' })
         }
 
-        const token = jwt.sign({ id: usuario.rows[0].id }, senhaJwt, { expiresIn: '2h' })
+        const token = jwt.sign({ id: usuario.id }, process.env.HASH, { expiresIn: '2h' })
 
-        const { senha: _, ...usuarioLogado } = usuario.rows[0]
+        const { senha: _, ...dadosUsuario } = usuario
 
-        return res.status(200).json({ usuario: usuarioLogado, token })
+        return res.status(200).json({ usuario: dadosUsuario, token })
     } catch (error) {
         return res.status(500).json({ mensagem: 'Erro do servidor' })
     }

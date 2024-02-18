@@ -1,29 +1,18 @@
-const pool = require('../../conexao')
-
+const knex = require('../../bancoDeDados/conexao')
 
 const detalharTransacao = async (req, res) => {
     const { id: idTransacao } = req.params
-    const { id: idUsuario } = req.usuario
+    const { id } = req.usuario
 
     try {
-        const { rows } = await pool.query(` select transacoes.id,
-        transacoes.tipo,
-        transacoes.descricao,
-        transacoes.valor,
-        transacoes.data,
-        transacoes.usuario_id,
-        categorias.id as categoria_id,
-        categorias.descricao as categorias_nome
-        from categorias
-        join transacoes on categorias.id = transacoes.categoria_id
-       where transacoes.id = $1 and transacoes.usuario_id = $2`, [idTransacao, idUsuario])
+        const transacao = await knex('transacoes').where({ id: idTransacao, usuario_id: id }).first()
 
-        if (rows < 1) return res.status(404).json({ message: "Transação não encontrada" })
+        if (!transacao) return res.status(404).json({ mensagem: 'Transação não encontrada ou não pertence a este usuário' })
 
-        return res.status(200).json(rows)
+        return res.status(200).json(transacao)
 
     } catch (error) {
-        return res.status(401).json({ mensagem: 'Não autorizado' })
+        return res.status(401).json({ mensagem: 'Error interno do servidor' })
     }
 
 }

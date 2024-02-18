@@ -1,22 +1,35 @@
-const pool = require('../../conexao')
+const knex = require('../../bancoDeDados/conexao')
 const bcrypt = require('bcrypt')
 
 const atualizarUsuario = async (req, res) => {
     const { nome, email, senha } = req.body
-    const { id } = req.usuario
 
     try {
-        const { rows } = await pool.query('select * from usuarios where email =$1', [email])
+        const emailJaCadastrado = await knex('usuarios').where({ email }).andWhereNot({ id: req.usuario.id }).first();
 
-        if (rows.length > 0) {
-            return res.status(404).json({ mensagem: 'O e-mail informado já está sendo utilizado por outro usuário.' })
+        if (emailJaCadastrado) {
+            return res.status(400).json({
+                mensagem: 'Email informado já pertence a outra conta.'
+            })
         }
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
 
-        const atualizacaoDoUsuario = await pool.query('update usuarios SET nome = $1, email = $2, senha = $3 where id = $4', [nome, email, senhaCriptografada, id])
+        const usuarioAtulizado = await knex('usuarios').where({ id: req.usuario.id }).update({
+            nome,
+            email,
+            senha: senhaCriptografada
+        })
 
-        return res.status(201).send()
+        if (!usuarioAtulizado) {
+            return res.status(400).json({
+                mensagem: 'O usuario não foi atualizado.'
+            })
+        }
+
+        return res.status(200).json({
+            mensagem: 'Usuário atualizado com sucesso.'
+        })
     } catch (error) {
         console.log(error.message)
         return res.status(500).json({ mensagem: 'Erro do servidor' })
