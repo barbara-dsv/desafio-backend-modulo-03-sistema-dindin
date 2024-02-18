@@ -689,7 +689,70 @@ Essa é a rota que será chamada quando o usuario logado quiser obter o extrato 
 	"saida": 15800
 }
 ```
+---
 
+## **EXTRA**
+
+**ATENÇÃO!:** Esta parte extra não é obrigatória e recomendamos que seja feita apenas quando terminar toda a parte obrigatória acima. 
+
+### **Filtrar transações por categoria**
+
+Na funcionalidade de listagem de transações do usuário logado (**GET /transacao**), deveremos incluir um parâmetro do tipo query **filtro** para que seja possível consultar apenas transações das categorias informadas.
+
+**Lembre-se:** Deverão ser retornadas **apenas** transações associadas ao usuário logado, que deverá ser identificado através do ID presente no token de validação.
+
+- **Requisição**  
+  Parâmetro opcional do tipo query **filtro**.
+  Não deverá possuir conteúdo no corpo (body) da requisição.
+
+- **Resposta**  
+  Em caso de **sucesso**, o corpo (body) da resposta deverá possuir um array dos objetos (transações) encontradas.  
+  Em caso de **falha na validação**, a resposta deverá possuir **_status code_** apropriado, e em seu corpo (body) deverá possuir um objeto com uma propriedade **mensagem** que deverá possuir como valor um texto explicando o motivo da falha.
+
+- **REQUISITOS OBRIGATÓRIOS**
+  - O usuário deverá ser identificado através do ID presente no token de validação
+  - O parâmetro opcional do tipo query **filtro**, quando enviado, deverá ser sempre um array contendo a descrição de uma ou mais categorias.
+  - O endpoint deverá responder com um array de todas as transações associadas ao usuário que sejam da categorias passadas no parâmetro query. Caso não exista nenhuma transação associada ao usuário deverá responder com array vazio.
+
+#### **Exemplo de requisição**
+
+```javascript
+// GET /transacao?filtro[]=roupas&filtro[]=salários
+// Sem conteúdo no corpo (body) da requisição
+```
+
+#### **Exemplos de resposta**
+
+```javascript
+// HTTP Status 200 / 201 / 204
+[
+  {
+    id: 1,
+    tipo: "saida",
+    descricao: "Sapato amarelo",
+    valor: 15800,
+    data: "2022-03-23T15:35:00.000Z",
+    usuario_id: 5,
+    categoria_id: 4,
+    categoria_nome: "Roupas",
+  },
+  {
+    id: 3,
+    tipo: "entrada",
+    descricao: "Salário",
+    valor: 300000,
+    data: "2022-03-24T15:30:00.000Z",
+    usuario_id: 5,
+    categoria_id: 6,
+    categoria_nome: "Salários",
+  },
+];
+```
+
+```javascript
+// HTTP Status 200 / 201 / 204
+[];
+```
 ---
 
 ###### tags: `back-end` `módulo 3` `nodeJS` `PostgreSQL` `API REST` `desafio`
